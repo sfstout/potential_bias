@@ -116,7 +116,7 @@ function removeDuplicatesFromArray (a) {
 //         longest potential match found in the trie
 // trie structure: [{Cont: [{}, isMatch]}, isMatch]
 // [String] -> Int -> Trie -> {endIndex: Int; match: String}
-function parseforBiasPhrase (paragraph, startIndex, trie) {
+function parseForBiasPhrase (paragraph, startIndex, trie) {
     var longestMatch = [];
     var i = startIndex + 1;
     var lastMatchIndex = startIndex - 1;
@@ -162,7 +162,7 @@ function parseForBias (triggers, paragraph) {
         if (triggers[pa[i]] === true) { // Single word match
             biasSources.push(pa[i]);
         } else if (triggers[pa[i]]) { // Potential phrase match
-            biasPhrase = parseforBiasPhrase(pa, i, triggers[pa[i]][pa[i]] );
+            biasPhrase = parseForBiasPhrase(pa, i, triggers[pa[i]][pa[i]] );
             i = biasPhrase.endIndex;
             biasSources.push(biasPhrase.match);
         }
