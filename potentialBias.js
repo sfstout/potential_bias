@@ -6,7 +6,7 @@ var splitRegex = /\s|\.|,|'/;
 // array of strings to build the initial trie with
 // Input: p: String or Array of Strings
 // String -> wordTrie OR [String] -> wordTrie
-function wordTrie(p) {
+function wordTrie (p) {
     if (typeof p === 'string') {
         this.addPhrase(p);
     } else if ( Object.prototype.toString.call(p) === '[object Array]' ) {
@@ -20,16 +20,14 @@ function wordTrie(p) {
 // Output: None
 // [String] -> Int -> Modified wordTrie
 wordTrie.prototype.addPhraseByArray = function (a, i) {
-    if (!this[a[i]]) {
-        if (i === a.length - 1) {
-            this[a[i]] = [new wordTrie(), true];
-        } else {
-            this[a[i]] = [new wordTrie(), false];
-        }
+    if (!this[a[i]]) { // Not in the trie yet
         if (a[i + 1]) {
+            this[a[i]] = [new wordTrie(), false];
             this[a[i]][0].addPhraseByArray(a, i + 1);
+        } else {
+            this[a[i]] = [new wordTrie(), true];
         }
-    } else {
+    } else { // In the trie already
         if (a[i + 1]) {
             this[a[i]][0].addPhraseByArray(a, i + 1);
         } else if (i === a.length - 1) {
@@ -45,13 +43,11 @@ wordTrie.prototype.addPhraseByArray = function (a, i) {
 wordTrie.prototype.addPhrase = function (p) {
     var pa = p.split(splitRegex);
     if (!this[pa[0]]) {
-        if (pa.length === 1) {
-            this[pa[0]] = [new wordTrie(), true];
-        } else {
-            this[pa[0]] = [new wordTrie(), false];
-        }
         if (pa[1]) {
+            this[pa[0]] = [new wordTrie(), false];
             this[pa[0]][0].addPhraseByArray(pa, 1);
+        } else {
+            this[pa[0]] = [new wordTrie(), true];
         }
     } else {
             if (pa[1]) {
@@ -66,7 +62,7 @@ wordTrie.prototype.addPhrase = function (p) {
 // Inputs: a: An array of strings
 // Output: A triggers object
 // [String] -> {}
-function generateTriggersObject(a) {
+function generateTriggersObject (a) {
     var i;
     var ret = {};
     var phrase;
@@ -86,6 +82,9 @@ function generateTriggersObject(a) {
                 ret[a[i]] = true;
             }
         } else { // Single word already there
+            if (ret[a[i]] === true) {
+                ret[a[i]] = new wordTrie();
+            }
             ret[a[i]].addPhrase(a[i]);
         }
     }
@@ -117,13 +116,13 @@ function removeDuplicatesFromArray (a) {
 //         longest potential match found in the trie
 // trie structure: [{Cont: [{}, isMatch]}, isMatch]
 // [String] -> Int -> Trie -> {endIndex: Int; match: String}
-function parseforBiasPhrase(paragraph, startIndex, trie) {
+function parseforBiasPhrase (paragraph, startIndex, trie) {
     var longestMatch = [];
     var i = startIndex + 1;
+    var k;
     if (trie[1]) {
         longestMatch.push(paragraph[startIndex]);
     }
-    var k;
     while (trie[0][paragraph[i]]) { // While we can continue
         if (trie[0][paragraph[i]][1]) { // Match
             longestMatch = [];
@@ -134,8 +133,7 @@ function parseforBiasPhrase(paragraph, startIndex, trie) {
         trie = trie[0][paragraph[i]];
         i++;
     }
-
-    return {endIndex: startIndex, match: longestMatch.toString()};
+    return {endIndex: startIndex, match: longestMatch.join(' ')};
 }
 
 // A function which takes in a hash of trigger words and phrases as well as 
@@ -146,18 +144,18 @@ function parseforBiasPhrase(paragraph, startIndex, trie) {
 //	      paragraph: A string which is parsed for the triggering words/phrases
 // Output: Array of bias words/phrases detected in the input paragraph
 // {} -> String -> []
-function parseForBias(triggers, paragraph) {
+function parseForBias (triggers, paragraph) {
     var pa = paragraph.split(splitRegex);
-    var pap = []
-    for (var i = 0; i < pa.length; i++) {
+    var pap = [];
+    var i;
+    var biasSources = [];
+    var biasPhrase;
+    for (i = 0; i < pa.length; i++) {
         if (pa[i] !== '') {
             pap.push(pa[i])
         }
     }
     pa = pap
-    var i;
-    var biasSources = [];
-    var biasPhrase;
     for (i = 0; i < pa.length; i++) {
         if (triggers[pa[i]] === true) { // Single word match
             biasSources.push(pa[i]);
@@ -169,7 +167,6 @@ function parseForBias(triggers, paragraph) {
     }
     return removeDuplicatesFromArray(biasSources);
 }
-
 
 // Test stuff
 
