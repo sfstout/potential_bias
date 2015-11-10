@@ -119,16 +119,18 @@ function removeDuplicatesFromArray (a) {
 function parseforBiasPhrase (paragraph, startIndex, trie) {
     var longestMatch = [];
     var i = startIndex + 1;
+    var lastMatchIndex = startIndex - 1;
     var k;
     if (trie[1]) {
         longestMatch.push(paragraph[startIndex]);
+        lastMatchIndex = startIndex;
     }
     while (trie[0][paragraph[i]]) { // While we can continue
         if (trie[0][paragraph[i]][1]) { // Match
-            longestMatch = [];
-            for (k = startIndex; k <= i; k++) {
+            for (k = lastMatchIndex + 1; k <= i; k++) {
                 longestMatch.push(paragraph[k]);
             }
+            lastMatchIndex = i;
         }
         trie = trie[0][paragraph[i]];
         i++;
