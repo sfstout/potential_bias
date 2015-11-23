@@ -1,0 +1,17 @@
+{
+  "name": "Potential Bias",
+  "description": "Attempts to identify potential sources of bias in media and automatically generates a disclaimer",
+  "version": "0.1",
+  "permissions": [
+  	"webNavigation",
+  	"tabs",
+  	"activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["*://*.theverge.com/*"],
+      "js": ["potentialBiasContent.js"]
+    }
+  ],
+  "manifest_version": 2
+}

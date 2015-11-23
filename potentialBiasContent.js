@@ -1,29 +1,3 @@
-
-// Get the url of the current tab and invoke a callback
-function getCurrentTabUrl(callback) {
-  var queryInfo = {
-    active: true,
-    currentWindow: true
-  };
-
-  chrome.tabs.query(queryInfo, function(tabs) {
-    var tab = tabs[0];
-    if (tab && tab.url) {
-        var url = tab.url;
-        console.assert(typeof url == 'string', 'tab.url should be a string');
-        callback(url);
-    }
-  });
-}
-
-// The extention will only launch on the completion of a webnavigation.
-// It will also only launch when the url that is navigated to matches the
-// something in the second parameter (As of now, it only launches when
-// the user goes to theverge.com (or something similar))
-chrome.webNavigation.onCompleted.addListener(function() {
-        getCurrentTabUrl(function (a) {console.log(a);});
-    }, {url: [{hostContains: '.theverge'}]});
-
 // Regex by which to split the input paragraph
 var splitRegex = /\s|\.|,|'/;
 
@@ -169,7 +143,7 @@ function parseForBiasPhrase (paragraph, startIndex, trie) {
 // words and phrases
 // Input: triggers: An object which contains the trigger words as keys, values
 //                  are either true or a trie type structure for phrase detection
-//	      paragraph: A string which is parsed for the triggering words/phrases
+//        paragraph: A string which is parsed for the triggering words/phrases
 // Output: Array of bias words/phrases detected in the input paragraph
 // {} -> String -> []
 function parseForBias (triggers, paragraph) {
@@ -189,16 +163,74 @@ function parseForBias (triggers, paragraph) {
             biasSources.push(pa[i]);
         } else if (triggers[pa[i]]) { // Potential phrase match
             biasPhrase = parseForBiasPhrase(pa, i, triggers[pa[i]][pa[i]] );
-            i = biasPhrase.endIndex;
-            biasSources.push(biasPhrase.match);
+            if (biasPhrase.match) {
+                i = biasPhrase.endIndex;
+                biasSources.push(biasPhrase.match);
+            }
         }
     }
     return removeDuplicatesFromArray(biasSources);
 }
 
-// Test stuff
+// A function which gets the article on the page and returns it in text format
+// Currently only does anything for theverge.com
+// Input: url: A string which is the current url
+// Output: A string which is the article to be parsed
+// String -> String
+function getArticle (url) {
+    var article = "";
+    var temp;
+    var i;
 
-var testParagraph = "Comcast’s corporate headquarters, Comcast Center, is the tallest building in Philadelphia. It’s covered in mirrors, which makes it the perfect metaphor for the company, one former employee says; no matter where you go, the glare is in your eyes.\n\nIt seems a lot of people share that sentiment.\n\nComcast earned Consumerist’s “Worst Company in America” title twice, first in 2010 and again this year, 2014. It ranks at the very bottom of the American Consumer Satisfaction Index, underperforming even the rest of the cable industry, where “high prices, poor reliability, and declining customer service” are endemic.\n\nIn mid-July, AOL executive Ryan Block placed a call to Comcast customer service in an effort to cancel his service. What ensued was an 18-minute, Kafkaesque struggle with an overly persistent employee, which Block partially recorded and posted online. The recording went viral, and has now been listened to more than 5 million times. The interaction was covered by every major news network, immortalized in a New Yorker cartoon, and included in a David Letterman top 10 list (“Lesser-known Labors of Hercules”). “It hit the cultural zeitgeist something fierce,” Block says. “I guess it touched some kind of nerve. It was a keyed-up, aggressive version of a call I think most people have had.”\n\nThousands of Comcast customers across the country have experienced similar customer service nightmares when dealing with the company. Usually these involve multiple rounds of phone calls, missed technician appointments, and unexpected fees. In fact, forums like comcastmustdie.com and the Comcast section of Reddit have been created to give customers a dedicated space to vent.";
-var testTriggers = generateTriggersObject(['Comcast', 'AOL', 'David Letterman']);
+    if (url.indexOf('theverge') !== -1) {
+        temp = document.querySelectorAll('.article-body');
+        for (i = 0; i < temp.length; i++) {
+            article += temp[i].innerText + ' '; 
+        }
+        temp = document.querySelectorAll('.m-article__entry');
+        for (i = 0; i < temp.length; i++) {
+            article += temp[i].innerText + ' '; 
+        }
+        temp = document.querySelector('#feature-body');
+        if (temp) {
+            article += temp.innerText;
+        }
+    }
 
-console.log(parseForBias(testTriggers, testParagraph))
+    return article;
+}
+
+
+// Currently a dummy function
+// Input: url: a string which is the current url
+// Output: An array of strings which acts as a list of trigger words and phrases
+// String -> [String]
+function getTriggers (url) {
+
+    return generateTriggersObject(['Comcast', 'AOL', 'David Letterman']);
+}
+
+// Currently a dummy function
+// Inut : triggers: an array of strings which are the triggers on the current page
+// Output: The HTML to insert into the page
+// [String] -> HTMLNode?
+function generateDisclaimers (triggers) {
+    var i;
+    var disclaimerDiv = document.createElement('div');
+    var temp;
+    for (i = 0; i < triggers.length; i++) {
+        temp = document.createElement('div');
+        temp.innerText = 'The Verge is associated with ' + triggers[i];
+        disclaimerDiv.appendChild(temp);
+    }
+    return disclaimerDiv;
+}
+
+// Runs on page load
+(function () {
+
+    var article = getArticle(document.URL);
+    var triggers = getTriggers(document.URL);
+
+    document.querySelector('#verge').appendChild(generateDisclaimers(parseForBias(triggers, article)));
+})();
