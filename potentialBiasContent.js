@@ -236,7 +236,7 @@ function generateDisclaimers (triggers) {
     // How I want this to eventually work is roughly like:
     /*
         the getArticle function should preferably take an array of where to scrape for the article.
-        It should be something like do a selectorQueryAll on each element in the array, adding these
+        It should be something like do a querySelectorAll on each element in the array, adding these
         contents to the article, then parsing the article. So in effect, getArticle should just be 
         basically a shell which does a bunch of foreach loops. If the article comes back blank,
         degrade to getting the innerText of the document body
@@ -250,6 +250,31 @@ function generateDisclaimers (triggers) {
         an array of strings which should be attempted to be querySelected, if the first comes back null,
         try the next, if that's null, try the next, etc. Eventually degrade to just attaching to the 
         document body
+
+        // Get this from the server
+        var info = {
+                        siteName : String, // Maybe unnecessary?
+                        getArticleFrom : [String],
+                        triggers : {
+                            trigger : String
+                        },
+                        appendTo : [String]
+        };
+
+        siteName        : Just the name of the site. This is probably not actually needed
+        getArticleFrom  : An array of strings of which to grab the innerText of to append to the article
+                          body which will then be parsed. If at the end of this process the article is
+                          still empty, then degrade to grabbing the innerText of the document body.
+        triggers        : An object whose keys are the different trigger words and phrases (objects can 
+                          have multi-word strings as keys). It is delivered in this form so that a 
+                          TriggersObject can be made with the keys, then when the final parseForBias 
+                          array gets created, it can be traversed and the values of these keys will be 
+                          added to the final disclaimer
+        appendTo        : An array of strings which should be sorted in order of priority of where to 
+                          attach the final disclaimer. Once one of these is successfully found, the 
+                          disclaimer is attached here and the attaching function quits. If no appendTo 
+                          values can be successfully found using document.querySelector, then just 
+                          degrade to attaching to the document body.
     */
     var article = getArticle(document.URL);
     var triggers = getTriggers(document.URL);

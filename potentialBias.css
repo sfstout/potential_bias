@@ -1,0 +1,14 @@
+.--pbe-disclaimer {
+    margin: 22.5px auto;
+    list-style: none;
+    width: 66.666%;
+}
+
+.--pbe-disclaimer>li:first-child {
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.--pbe-disclaimer>li {
+    font-size: 14px;
+}
