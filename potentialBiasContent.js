@@ -177,7 +177,7 @@ function parseForBias (triggers, paragraph) {
 // Input: url: A string which is the current url
 // Output: A string which is the article to be parsed
 // String -> String
-function getArticle (url) {
+/*function getArticle (url) {
     var article = "";
     var temp;
     var i;
@@ -198,6 +198,40 @@ function getArticle (url) {
     }
 
     return article;
+}*/
+
+// A function which gets the article on the page and returns it in text format
+// Input: queries: An array of strings which represent how to query the HTML page
+//                in order to grab the article
+// Output: A string which is the article to be parsed
+// [String] -> String
+function getArticle (queries) {
+    var article = "";
+    var temp;
+    var i,j;
+    for (i = 0; i < queries.length; i++) {
+        temp = document.querySelectorAll(queries[i]);
+        for (j = 0; j < temp.length; j++) {
+            article += temp[j].innerText + ' ';
+        }
+    }
+    return article;
+}
+
+// A function which gets the element to which to attach the disclaimer
+// Input: queries: An array of strings which represent how to query the HTML page
+//                in order to get the element to which to attach
+// Output: The element to which to attach the disclaimer
+// [String] -> HTMLNode
+function getAppendTo (queries) {
+    var i;
+    for (i = 0; i < queries.length; i++) {
+        temp = document.querySelector(queries[i]);
+        if (temp) {
+            return temp;
+        }
+    }
+    return document.querySelector('body') || document; // I think this works
 }
 
 
@@ -205,26 +239,44 @@ function getArticle (url) {
 // Input: url: a string which is the current url
 // Output: An array of strings which acts as a list of trigger words and phrases
 // String -> [String]
-function getTriggers (url) {
-
+/*function getTriggers (url) {
     return generateTriggersObject(['Comcast', 'AOL', 'David Letterman']);
+}*/
+
+// returns a triggers object
+// Input: triggers: an object which contains the triggers as keys and the discaimer
+//                  for finding that key as values
+// Output: A triggers Object
+// {String: String} -> {}
+function getTriggers (triggersMap) {
+    var arr = [];
+    var k;
+    for (k in triggersMap) {
+        arr.push(k);
+    }
+    return generateTriggersObject(arr);
 }
 
-// Currently a dummy function
-// Inut : triggers: an array of strings which are the triggers on the current page
+// This works currently, but it may want to be modified
+// Input : triggers: an array of strings which are the triggers on the current page
+//         triggersMap: an object which contains the triggers as keys and the 
+//                      associated disclaimer as its value
 // Output: The HTML to insert into the page
 // [String] -> HTMLNode?
-function generateDisclaimers (triggers) {
+function generateDisclaimers (triggers, triggersMap) {
     var i;
     var disclaimer = document.createElement('ul');
     disclaimer.className = '--pbe-disclaimer'
     var temp;
+    if (triggers.length === 0) {
+        return null;
+    }
     temp = document.createElement('li');
     temp.innerText = 'Disclaimer:';
     disclaimer.appendChild(temp);
     for (i = 0; i < triggers.length; i++) {
         temp = document.createElement('li');
-        temp.innerText = 'The Verge is associated with ' + triggers[i];
+        temp.innerText =  triggersMap[triggers[i]];
         disclaimer.appendChild(temp);
     }
     return disclaimer;
@@ -265,7 +317,7 @@ function generateDisclaimers (triggers) {
         getArticleFrom  : An array of strings of which to grab the innerText of to append to the article
                           body which will then be parsed. If at the end of this process the article is
                           still empty, then degrade to grabbing the innerText of the document body.
-        triggers        : An object whose keys are the different trigger words and phrases (objects can 
+        triggersMap     : An object whose keys are the different trigger words and phrases (objects can 
                           have multi-word strings as keys). It is delivered in this form so that a 
                           TriggersObject can be made with the keys, then when the final parseForBias 
                           array gets created, it can be traversed and the values of these keys will be 
@@ -276,16 +328,23 @@ function generateDisclaimers (triggers) {
                           values can be successfully found using document.querySelector, then just 
                           degrade to attaching to the document body.
     */
-    var article = getArticle(document.URL);
-    var triggers = getTriggers(document.URL);
 
-    var appendTo = document.querySelector('.m-article__sources');
-
-    if (!appendTo) {
-        appendTo = document.querySelector('article');
-    } else {
-        appendTo = appendTo.parentElement;
+    // This should come from the server
+    var info = {
+        getArticleFrom: ['.article-body','.m-article__entry','#feature-body'],
+        triggersMap: { "Comcast": "The Verge is owned by Vox which owns Comcast",
+                    "AOL": "The Verge is associated with AOL",
+                    "David Letterman": "The Verge is paid by David Letterman"
+        },
+        appendTo: ['.m-article__sources', 'article']
     }
 
-    appendTo.appendChild(generateDisclaimers(parseForBias(triggers, article)));
+    var article = getArticle(info.getArticleFrom);
+    var triggers = getTriggers(info.triggersMap);
+    var appendTo = getAppendTo(info.appendTo);
+    var disclaimers = generateDisclaimers(parseForBias(triggers, article), info.triggersMap);
+
+    if (disclaimers !== null) {
+        appendTo.appendChild(disclaimers);
+    }
 })();
