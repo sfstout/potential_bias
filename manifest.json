@@ -10,7 +10,8 @@
   "content_scripts": [
     {
       "matches": ["*://*.theverge.com/*"],
-      "js": ["potentialBiasContent.js"]
+      "js": ["potentialBiasContent.js"],
+      "css": ["potentialBias.css"]
     }
   ],
   "manifest_version": 2

@@ -216,21 +216,51 @@ function getTriggers (url) {
 // [String] -> HTMLNode?
 function generateDisclaimers (triggers) {
     var i;
-    var disclaimerDiv = document.createElement('div');
+    var disclaimer = document.createElement('ul');
+    disclaimer.className = '--pbe-disclaimer'
     var temp;
+    temp = document.createElement('li');
+    temp.innerText = 'Disclaimer:';
+    disclaimer.appendChild(temp);
     for (i = 0; i < triggers.length; i++) {
-        temp = document.createElement('div');
+        temp = document.createElement('li');
         temp.innerText = 'The Verge is associated with ' + triggers[i];
-        disclaimerDiv.appendChild(temp);
+        disclaimer.appendChild(temp);
     }
-    return disclaimerDiv;
+    return disclaimer;
 }
 
 // Runs on page load
 (function () {
 
+    // How I want this to eventually work is roughly like:
+    /*
+        the getArticle function should preferably take an array of where to scrape for the article.
+        It should be something like do a selectorQueryAll on each element in the array, adding these
+        contents to the article, then parsing the article. So in effect, getArticle should just be 
+        basically a shell which does a bunch of foreach loops. If the article comes back blank,
+        degrade to getting the innerText of the document body
+
+        getTriggers ultimately just needs to provide an array of trigger words and phrases. It might
+        also give back an object which gives the eventual disclaimer which will be attached to the
+        article later
+
+        the appendTo variable should come about in a similar way to getArticle, in that it should ask
+        the server 'for this site, what should I append the disclaimer to?'. What should come back is
+        an array of strings which should be attempted to be querySelected, if the first comes back null,
+        try the next, if that's null, try the next, etc. Eventually degrade to just attaching to the 
+        document body
+    */
     var article = getArticle(document.URL);
     var triggers = getTriggers(document.URL);
 
-    document.querySelector('#verge').appendChild(generateDisclaimers(parseForBias(triggers, article)));
+    var appendTo = document.querySelector('.m-article__sources');
+
+    if (!appendTo) {
+        appendTo = document.querySelector('article');
+    } else {
+        appendTo = appendTo.parentElement;
+    }
+
+    appendTo.appendChild(generateDisclaimers(parseForBias(triggers, article)));
 })();
